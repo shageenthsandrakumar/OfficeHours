@@ -64,19 +64,29 @@ class DossierDimension(BaseModel):
 
 
 class Dossier(BaseModel):
-    """Structured fit dossier produced before agents are invoked."""
+    """Structured fit dossier produced before agents are invoked.
+
+    Field semantics follow OfficeHours Logic v0 §3 (Jayashree's contract).
+    """
     routing: DossierRouting
     dimensions: list[DossierDimension] = []
-    strengths: list[str] = []         # student agent slice — what to advocate for
-    risks: list[str] = []             # professor agent slice — hard requirements / gaps
-    uncertainties: list[str] = []     # mediator slice — what's genuinely unclear
+    strengths: list[str] = []         # student-advocate slice — what to advocate for
+    risks: list[str] = []             # professor/gate slice — skill_gaps + preferred-bg gap
+    uncertainties: list[str] = []     # mediator slice — open questions (max 2), §3.5
+    skills_met: str = ""              # e.g. "3/4" — coverage of required skills
+    skill_gaps: list[str] = []        # required skills not explicitly met, §3.2
+    routing_reason: str = ""          # one-line why-this-routing, §3.6
     overall_confidence: float = Field(ge=0.0, le=1.0, default=0.5)
     summary: str = ""                 # human-readable one-paragraph overview
 
-    # Backwards-compat alias so old code referencing .score still works
+    # --- naming aliases so code following the v0 doc / older code still works ---
     @property
     def score(self) -> float:
         return self.overall_confidence
+
+    @property
+    def open_questions(self) -> list[str]:
+        return self.uncertainties
 
     @property
     def missing_info(self) -> list[str]:

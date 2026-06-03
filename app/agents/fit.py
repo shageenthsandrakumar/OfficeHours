@@ -26,18 +26,22 @@ from app.models import Dossier, DossierDimension, DossierRouting, LabProject, St
 # so "ROS" matches "ROS2", "hardware" matches "PCB", "FPGA", etc.
 # ---------------------------------------------------------------------------
 SKILL_ALIASES: dict[str, list[str]] = {
-    "python": ["python", "py ", ".py", "django", "flask", "fastapi"],
+    # Stems chosen per v0 doc §4: python↔pytorch, robotics↔ros/robotic/arm,
+    # hardware↔pcb/fabricat/actuator, cad↔3d print/solidworks/fusion.
+    "python": ["python", "pytorch", "py ", ".py", "django", "flask", "fastapi"],
     "pytorch": ["pytorch", "torch"],
     "tensorflow": ["tensorflow", "tf ", "keras"],
     "machine learning": ["machine learning", "ml ", "sklearn", "scikit"],
     "deep learning": ["deep learning", "neural network", "cnn", "rnn", "transformer"],
     "nlp": ["nlp", "natural language", "text classification", "bert", "gpt"],
     "computer vision": ["computer vision", "cv ", "image recognition", "object detection"],
-    "robotics": ["robotics", "robot", "ros", "ros2", "actuator", "kinematics"],
+    "robotics": ["robotics", "robotic", "robot arm", "ros", "ros2", "actuator", "kinematics"],
     "ros": ["ros", "ros2", "roslaunch", "roscpp", "rospy"],
-    "hardware": ["hardware", "pcb", "fpga", "circuit", "soldering", "embedded", "microcontroller", "arduino", "raspberry pi"],
+    "hardware": ["hardware", "pcb", "fabricat", "circuit", "soldering", "embedded",
+                 "microcontroller", "arduino", "raspberry pi", "fpga"],
     "fpga": ["fpga", "vhdl", "verilog", "xilinx", "altera"],
-    "cad": ["cad", "solidworks", "fusion 360", "autocad", "onshape", "3d printing", "3d model"],
+    # NOTE: CAD stays a GAP for Aisha — her arm story has no cad/3d-print/fusion token.
+    "cad": ["cad", "solidworks", "fusion", "autocad", "onshape", "3d print", "3d model"],
     "c++": ["c++", "cpp", "cmake"],
     "r": [" r ", "rstudio", "tidyverse", "ggplot"],
     "matlab": ["matlab", "simulink"],
@@ -149,57 +153,77 @@ def evaluate_fit(
         gap="" if not preferred or preferred_matches else f"None of: {', '.join(preferred)}",
     ))
 
-    # --- Compute strengths, risks, uncertainties ---
-    strengths: list[str] = []
-    risks: list[str] = []
-    uncertainties: list[str] = []
+    # --- conversation_history can resolve open questions mid-negotiation (§4) ---
+    convo_text = " ".join(str(t.get("content", "")).lower() for t in (conversation_history or []))
 
-    # Strengths: covered skills + ownership signals
+    # A skill gap is "resolved" if the negotiation has surfaced its evidence.
+    resolved_gaps = {
+        s for s in missing
+        if any(alias in convo_text for alias in SKILL_ALIASES.get(s.lower(), [s.lower()]))
+    }
+    effective_missing = [s for s in missing if s not in resolved_gaps]
+
+    # --- Strengths (student-advocate slice) ---
+    strengths: list[str] = []
     for s in covered:
         source = covered_via[s]
         if source == "skills_list":
-            strengths.append(f"Has '{s}' listed as a skill")
+            strengths.append(f"Has '{s}' as a listed skill")
         elif source == "intake_summary":
             strengths.append(f"Demonstrated '{s}' in intake narrative")
         elif source == "extra_signals":
             strengths.append(f"Evidence of '{s}' in project signals")
-
     for k, v in ownership_signals.items():
         strengths.append(f"{k}: {v}")
-
     if student_profile.intake_summary:
-        strengths.append("Has detailed intake narrative (non-obvious signals may be present)")
+        strengths.append("Detailed intake narrative — non-obvious signals present")
 
-    # Risks: hard missing skills
-    for s in missing:
-        risks.append(f"Required skill '{s}' not found in skills, intake, or signals")
-
+    # --- Risks (professor/gate slice): skill_gaps + preferred-background gap ---
+    risks: list[str] = []
+    for s in effective_missing:
+        risks.append(f"Required skill '{s}' not explicit in skills, intake, or signals")
     if not preferred_matches and preferred:
         risks.append(f"Preferred background not matched: {', '.join(preferred)}")
 
-    # Uncertainties: covered via soft evidence (not explicit skills list)
+    # --- Open questions / uncertainties (mediator slice), capped at 2 per §3.5 ---
+    uncertainties: list[str] = []
+    # Priority 1: learnable skill gaps — phrase as a question, not a hard reject
+    for s in effective_missing:
+        uncertainties.append(
+            f"{s}: does the student have hands-on {s}? Implied by build experience but not explicit."
+        )
+    # Priority 2: soft preferred-background gap
+    if not preferred_matches and preferred:
+        uncertainties.append(
+            f"Background is {student_profile.field}, not {' / '.join(preferred)} — "
+            "weigh project evidence in negotiation, not auto-reject."
+        )
+    # Priority 3: skills met only via soft inference
     for s in covered:
         if covered_via[s] != "skills_list":
-            uncertainties.append(
-                f"'{s}' inferred from {covered_via[s]} — not explicitly listed as a skill"
-            )
+            uncertainties.append(f"'{s}' inferred from {covered_via[s]} — confirm depth in negotiation.")
+    uncertainties = uncertainties[:2]  # max 2 (§3.5)
 
-    if has_strong_ownership and missing:
-        uncertainties.append(
-            "Strong ownership signals present but missing some required skills — "
-            "ownership may compensate; negotiation needed"
-        )
-
-    # --- Routing ---
-    if missing and not has_strong_ownership:
-        # Missing required skill(s) with no ownership evidence to compensate
+    # --- Routing (§4) ---
+    # CLEAR_MISMATCH only when a required skill has zero evidence AND no ownership to compensate.
+    if effective_missing and not has_strong_ownership:
         routing = DossierRouting.CLEAR_MISMATCH
-    elif not missing and not uncertainties:
-        # All required skills explicitly listed, no soft inferences
+        routing_reason = (
+            f"Required skill(s) {effective_missing} have no evidence and no compensating "
+            "ownership signals."
+        )
+    elif not effective_missing and not uncertainties:
         routing = DossierRouting.CLEAR_FIT
+        routing_reason = "All required skills met with explicit evidence; no material gaps."
     else:
-        # Either has missing skills but strong ownership, OR skills inferred from soft evidence
         routing = DossierRouting.AMBIGUOUS
+        if effective_missing and has_strong_ownership:
+            routing_reason = (
+                f"Core skills met except {effective_missing}; strong ownership overrides weak "
+                "paper profile; preferred-background gap is soft only."
+            )
+        else:
+            routing_reason = "Partial or inferred skill coverage; agent hearing needed to resolve."
 
     # --- Overall confidence ---
     overall_confidence = round(
@@ -207,7 +231,9 @@ def evaluate_fit(
     )
 
     # --- Summary ---
-    summary = _build_summary(student_profile, project, covered, missing, ownership_signals, routing)
+    summary = _build_summary(
+        student_profile, project, covered, effective_missing, ownership_signals, routing
+    )
 
     return Dossier(
         routing=routing,
@@ -215,6 +241,9 @@ def evaluate_fit(
         strengths=strengths,
         risks=risks,
         uncertainties=uncertainties,
+        skills_met=f"{len(covered)}/{len(required)}" if required else "n/a",
+        skill_gaps=effective_missing,
+        routing_reason=routing_reason,
         overall_confidence=overall_confidence,
         summary=summary,
     )
