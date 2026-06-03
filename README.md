@@ -220,14 +220,28 @@ demo.py · run.py
 
 ## Team
 
-Built for **NY Tech Week — AI Agents: From Prototype to Production** (2026-06-03).
+Built together for **NY Tech Week — AI Agents: From Prototype to Production** (2026-06-03). OfficeHours is a shared codebase — product logic, backend, and agent workflows were designed and implemented collaboratively.
 
-| Name | GitHub | Role |
-|------|--------|------|
-| Jayashree Johnson | [@jayashreejohnson](https://github.com/jayashreejohnson) | Product logic, dossier design, matching rules |
-| Shageenth Sandrakumar | [@shageenthsandrakumar](https://github.com/shageenthsandrakumar) | Backend, negotiation loop, API, integrations |
+### Jayashree Johnson · [@jayashreejohnson](https://github.com/jayashreejohnson)
 
-**Contributions welcome:** frontend (live dossier + agent transcript), Phinite SDK wiring, Railway deploy — open an issue or PR on `main`.
+- Product architecture and vision  
+- Dossier design  
+- Matching and routing framework  
+- Evaluation logic specification  
+- Frontend / UI  
+- Railway deployment  
+- API integration and product workflows  
+- Demo design and product positioning  
+
+### Shageenth Sandrakumar · [@shageenthsandrakumar](https://github.com/shageenthsandrakumar)
+
+- Backend architecture  
+- FastAPI infrastructure  
+- Agent orchestration  
+- Database integration  
+- Sponsor integrations  
+
+**Contributions welcome:** Phinite SDK wiring, deeper observability, and polish on `main` — open an issue or PR.
 
 ---
 
