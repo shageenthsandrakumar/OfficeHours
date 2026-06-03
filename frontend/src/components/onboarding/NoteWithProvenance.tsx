@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { SharedNotePayload } from "@/lib/types";
+import type { SharedNotePayload, ViewerLens } from "@/lib/types";
+import { lensForRole } from "@/lib/onboarding/lightweight";
 import { loadIntakeSession } from "@/lib/onboarding/session";
 import { resolveDemoInvestigation } from "@/lib/onboarding/resolveDemo";
 import type { IntakeSession } from "@/lib/onboarding/types";
@@ -11,9 +12,14 @@ import { SharedNoteView } from "../shared-note/SharedNoteView";
 interface Props {
   note: SharedNotePayload;
   showCreatedBanner?: boolean;
+  initialLens?: ViewerLens;
 }
 
-export function NoteWithProvenance({ note, showCreatedBanner }: Props) {
+export function NoteWithProvenance({
+  note,
+  showCreatedBanner,
+  initialLens,
+}: Props) {
   const [session, setSession] = useState<IntakeSession | null>(null);
 
   useEffect(() => {
@@ -24,6 +30,10 @@ export function NoteWithProvenance({ note, showCreatedBanner }: Props) {
     ? resolveDemoInvestigation(session).label
     : "";
 
+  const lens =
+    initialLens ??
+    (session ? lensForRole(session.role) : ("for_me" as ViewerLens));
+
   return (
     <>
       {showCreatedBanner && session ? (
@@ -31,7 +41,7 @@ export function NoteWithProvenance({ note, showCreatedBanner }: Props) {
           <InvestigationProvenance session={session} demoLabel={demoLabel} />
         </div>
       ) : null}
-      <SharedNoteView note={note} />
+      <SharedNoteView note={note} initialLens={lens} />
     </>
   );
 }

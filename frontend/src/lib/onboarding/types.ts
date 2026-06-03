@@ -1,3 +1,16 @@
+export type DemoRole = "student" | "opportunity";
+
+/** Minimal judge-friendly intake (3 answers per role). */
+export interface LightweightIntake {
+  role: DemoRole;
+  /** Q1: name or project title */
+  primary: string;
+  /** Q2: hidden story or what evidence matters */
+  signal: string;
+  /** Q3: pursuit focus or main concern */
+  focus: string;
+}
+
 export interface StudentIntake {
   name: string;
   email: string;
@@ -20,6 +33,9 @@ export interface OpportunityIntake {
 }
 
 export interface IntakeSession {
+  role: DemoRole;
+  /** Present when using lightweight onboarding */
+  lightweight?: LightweightIntake;
   student: StudentIntake;
   opportunity: OpportunityIntake;
   analyzedAt: string;

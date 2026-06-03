@@ -39,15 +39,16 @@ import { ForProjectModePanel } from "./ForProjectModePanel";
 
 interface Props {
   note: SharedNotePayload;
+  initialLens?: ViewerLens;
 }
 
-export function SignalDiscoveryExperience({ note }: Props) {
-  const [lens, setLens] = useState<ViewerLens>("for_me");
+export function SignalDiscoveryExperience({ note, initialLens = "for_me" }: Props) {
+  const [lens, setLens] = useState<ViewerLens>(initialLens);
   const [active, setActive] = useState<ModeSectionId>(() =>
-    defaultSectionForLens("for_me")
+    defaultSectionForLens(initialLens)
   );
   const [unlocked, setUnlocked] = useState<Set<ModeSectionId>>(
-    () => new Set([defaultSectionForLens("for_me")])
+    () => new Set([defaultSectionForLens(initialLens)])
   );
 
   const { dossier, result } = note;

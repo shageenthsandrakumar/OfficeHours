@@ -1,12 +1,13 @@
 "use client";
 
-import type { SharedNotePayload } from "@/lib/types";
+import type { SharedNotePayload, ViewerLens } from "@/lib/types";
 import { SignalDiscoveryExperience } from "../discovery/SignalDiscoveryExperience";
 
 interface Props {
   note: SharedNotePayload;
+  initialLens?: ViewerLens;
 }
 
-export function SharedNoteView({ note }: Props) {
-  return <SignalDiscoveryExperience note={note} />;
+export function SharedNoteView({ note, initialLens }: Props) {
+  return <SignalDiscoveryExperience note={note} initialLens={initialLens} />;
 }

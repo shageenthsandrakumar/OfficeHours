@@ -47,6 +47,7 @@ export function SignalAnalysisLoader() {
           demoProjectId: "",
         });
         const session: IntakeSession = {
+          role: "student",
           student,
           opportunity,
           analyzedAt: new Date().toISOString(),

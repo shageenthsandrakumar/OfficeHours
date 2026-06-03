@@ -1,5 +1,7 @@
 import type {
+  DemoRole,
   IntakeSession,
+  LightweightIntake,
   OpportunityIntake,
   StudentIntake,
 } from "./types";
@@ -7,6 +9,35 @@ import type {
 const KEY = "officehours-intake-session";
 const STUDENT_DRAFT = "officehours-student-draft";
 const OPPORTUNITY_DRAFT = "officehours-opportunity-draft";
+const ROLE_KEY = "officehours-demo-role";
+const LIGHTWEIGHT_KEY = "officehours-lightweight-draft";
+
+export function saveDemoRole(role: DemoRole): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(ROLE_KEY, role);
+}
+
+export function loadDemoRole(): DemoRole | null {
+  if (typeof window === "undefined") return null;
+  const r = sessionStorage.getItem(ROLE_KEY);
+  return r === "student" || r === "opportunity" ? r : null;
+}
+
+export function saveLightweightDraft(data: LightweightIntake): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(LIGHTWEIGHT_KEY, JSON.stringify(data));
+}
+
+export function loadLightweightDraft(): LightweightIntake | null {
+  if (typeof window === "undefined") return null;
+  const raw = sessionStorage.getItem(LIGHTWEIGHT_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as LightweightIntake;
+  } catch {
+    return null;
+  }
+}
 
 export function saveStudentDraft(data: StudentIntake): void {
   if (typeof window === "undefined") return;
@@ -45,6 +76,7 @@ export function saveIntakeSession(session: IntakeSession): void {
   sessionStorage.setItem(KEY, JSON.stringify(session));
   sessionStorage.removeItem(STUDENT_DRAFT);
   sessionStorage.removeItem(OPPORTUNITY_DRAFT);
+  sessionStorage.removeItem(LIGHTWEIGHT_KEY);
 }
 
 export function loadIntakeSession(): IntakeSession | null {

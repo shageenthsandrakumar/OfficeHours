@@ -37,32 +37,47 @@ export function InvestigationProvenance({ session, demoLabel }: Props) {
         <div className="border-t border-honey/30 px-4 pb-4 pt-3 sm:px-5">
           <ol className="space-y-3 text-sm text-ink-muted">
             <li>
-              <span className="font-semibold text-ink">1. You shared — </span>
-              {student.name} ({student.year}, {student.field}) and the story: &ldquo;
-              {student.intakeStory.slice(0, 120)}
-              {student.intakeStory.length > 120 ? "…" : ""}&rdquo;
+              <span className="font-semibold text-ink">1. Role — </span>
+              {session.role === "student"
+                ? "You entered as a student (coach mode)."
+                : "You entered as an opportunity holder (reviewer mode)."}
             </li>
             <li>
-              <span className="font-semibold text-ink">2. Opportunity — </span>
+              <span className="font-semibold text-ink">2. You shared — </span>
+              {session.lightweight ? (
+                <>
+                  &ldquo;{session.lightweight.primary}&rdquo; · &ldquo;
+                  {session.lightweight.signal.slice(0, 80)}
+                  …&rdquo;
+                </>
+              ) : (
+                <>
+                  {student.name} ({student.year}) — &ldquo;
+                  {student.intakeStory.slice(0, 100)}…&rdquo;
+                </>
+              )}
+            </li>
+            <li>
+              <span className="font-semibold text-ink">3. Opportunity — </span>
               {opportunity.projectTitle} at {opportunity.labName} (
               {opportunity.requiredSkills})
             </li>
             <li>
-              <span className="font-semibold text-ink">3. Analysis — </span>
+              <span className="font-semibold text-ink">4. Analysis — </span>
               Surface credentials scanned, intake parsed, hidden signals surfaced,
               dossier built (rules-only), investigation routed.
             </li>
             <li>
-              <span className="font-semibold text-ink">4. Demo note — </span>
+              <span className="font-semibold text-ink">5. Demo note — </span>
               Full dossier and reviewer trail use enriched mock data ({demoLabel})
               so you can explore a complete investigation.
             </li>
           </ol>
           <Link
-            href="/onboarding/student"
+            href="/start"
             className="mt-4 inline-block text-sm font-medium text-coral hover:underline"
           >
-            Run a new intake →
+            Run a new demo →
           </Link>
         </div>
       ) : null}
