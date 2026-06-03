@@ -9,12 +9,19 @@ Three agents negotiate on your behalf. One fights for the student. One screens f
 A **Student Agent**, **Professor Agent**, and **Mediator Agent** negotiate over multiple turns to surface fit that a one-shot similarity score would miss — like a student who looks weak on paper but built relevant hardware in a side project.
 
 ```
-Student Agent  →  Professor Agent  →  Mediator Agent
-   (advocate)        (screener)          (arbiter)
-                                         MATCH / NO_MATCH / NEEDS_INFO
+           ┌─────────────┐
+           │   Dossier   │  ← structured pre-screen (evaluate_fit)
+           └──────┬──────┘
+        ┌─────────┴──────────┐
+   CLEAR_FIT /          AMBIGUOUS
+   CLEAR_MISMATCH            │
+   (skip agents)             ▼
+                  Student Agent → Professor Agent → Mediator Agent
+                   (advocate)        (screener)        (arbiter)
+                                                  MATCH / NO_MATCH
 ```
 
-The negotiation runs up to 6 turns with a hard cap. The mediator must justify its decision in writing.
+The dossier pre-screens every candidate. Only ambiguous cases trigger the full 3-agent negotiation (up to 6 turns, hard cap). The mediator must justify its decision in writing with evidence from the transcript.
 
 ## Stack
 
@@ -29,27 +36,45 @@ The negotiation runs up to 6 turns with a hard cap. The mediator must justify it
 
 ```
 app/
-├── models.py          # Pydantic models: StudentProfile, LabProject, AgentMessage, FitAssessment
+├── models.py               # Pydantic models: StudentProfile, LabProject, Dossier, AgentMessage
 ├── agents/
-│   ├── student_agent.py    # Advocates for the student
-│   ├── professor_agent.py  # Screens for the lab
-│   ├── mediator_agent.py   # Neutral arbiter, forces terminal decision
-│   └── fit.py              # evaluate_fit() — matching logic lives here
-├── negotiation.py     # The loop: Student → Professor → Mediator, 6-turn cap
-├── llm_client.py      # Provider-swappable LLM calls (Anthropic default → GMI)
-├── agent_runtime.py   # Phinite hooks: register_identity, trace_event, log_decision
-├── main.py            # FastAPI routes
-├── db_models.py       # SQLAlchemy ORM
-├── seed.py            # Seeds DB with real MIT lab listings + demo students
-└── scraper.py         # Scrapes / provides 20 real lab project listings
+│   ├── fit.py              # evaluate_fit() — THE core matching logic (Jayashree's domain)
+│   ├── student_agent.py    # Advocates for the student using dossier strengths slice
+│   ├── professor_agent.py  # Screens for the lab using dossier risks slice
+│   └── mediator_agent.py   # Neutral arbiter, forces MATCH/NO_MATCH with audit trail
+├── negotiation.py          # Dossier pre-screen → short-circuit or full negotiation loop
+├── llm_client.py           # Provider-swappable LLM calls (Anthropic default → GMI)
+├── agent_runtime.py        # Phinite hooks: register_identity, trace_event, log_decision
+├── main.py                 # FastAPI routes
+├── db_models.py            # SQLAlchemy ORM
+├── seed.py                 # Seeds DB with real MIT lab listings + demo students
+└── scraper.py              # 20 real MIT lab project listings (with live scraper fallback)
 ```
 
 ## Team
 
 | Name | GitHub | Role |
 |---|---|---|
-| Jayashree Johnson | @jayashreejohnson | Product logic, matching criteria, agent roles, deployment |
+| Jayashree Johnson | @jayashreejohnson | Product logic, matching criteria, dossier design, deployment |
 | Shageenth Sandrakumar | @shageenthsandrakumar | Backend plumbing, negotiation loop, sponsor integration |
+| *open* | — | UI / frontend (Next.js) |
+| *open* | — | TBD |
+
+## Joining the team
+
+We're building at **NY Tech Week — "AI Agents: From Prototype to Production"** (tonight, 2026-06-03).
+
+The fastest way to contribute:
+1. Clone the repo and run `python demo.py` to see the negotiation loop in action
+2. Check open areas below — pick one, branch off `main`, PR back
+3. Ping @jayashreejohnson or @shageenthsandrakumar on GitHub
+
+**Open areas:**
+- **Frontend (Next.js)** — show the 3 agents talking in real time, two account types (student / professor)
+- **Intake flow** — agentic student onboarding: structured questions → Student Agent asks smart follow-ups → rich profile
+- **Transcript upload** — student uploads course transcript; agents reference actual grades for relevant subjects
+- **Phinite integration** — implement 3 stubs in `agent_runtime.py` once SDK is available at kickoff
+- **Railway deployment** — wire up CI/CD to Railway
 
 ## Setup
 
@@ -85,7 +110,7 @@ Shows a full 3-agent negotiation in the terminal. Demo student: weak on paper (n
 
 ## Key interface
 
-The matching logic lives in one function. To contribute fit-scoring logic, implement:
+The core matching logic lives in one function. This is where fit signals are evaluated before agents run:
 
 ```python
 # app/agents/fit.py
@@ -93,11 +118,16 @@ def evaluate_fit(
     student_profile: StudentProfile,
     project: LabProject,
     conversation_history: list[dict],
-) -> FitAssessment:
+) -> Dossier:
     ...
 ```
 
-`FitAssessment = { score: float, reasoning: str, missing_info: list[str] }`
+Returns a `Dossier` with:
+- `routing` — `CLEAR_FIT` / `CLEAR_MISMATCH` / `AMBIGUOUS`
+- `strengths` — evidence for the student agent to advocate with
+- `risks` — hard requirements for the professor agent to probe
+- `uncertainties` — what's genuinely unclear (triggers negotiation)
+- `summary` — human-readable overview for logs and UI
 
 ## API
 
@@ -112,6 +142,5 @@ def evaluate_fit(
 
 ## Sponsor integrations
 
-- **GMI:** Set `GMI_API_KEY` + `GMI_ENDPOINT` in `.env` — `llm_client.py` switches automatically
-- **Phinite:** Implement the three stubs in `agent_runtime.py` with the Phinite SDK — every agent is instantly traced
->>>>>>> 68b0071 (Add README)
+- **GMI:** Set `GMI_API_KEY` + `GMI_ENDPOINT` in `.env` — `llm_client.py` switches automatically, zero agent code changes
+- **Phinite:** Implement the three stubs in `agent_runtime.py` with the Phinite SDK — every agent is instantly traced and governed
