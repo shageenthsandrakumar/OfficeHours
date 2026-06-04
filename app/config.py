@@ -6,6 +6,9 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
     gmi_api_key: str = ""
+    # GMI Anthropic-compatible host (Claude models via the anthropic SDK).
+    gmi_base_url: str = "https://api.gmi-serving.com"
+    # GMI OpenAI-compatible endpoint (open models via the openai SDK). Optional.
     gmi_endpoint: str = ""
     phinite_api_key: str = ""
     phinite_project: str = ""
