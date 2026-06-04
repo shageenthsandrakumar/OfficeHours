@@ -84,6 +84,12 @@ CREATE TABLE IF NOT EXISTS public.applications (
 CREATE OR REPLACE FUNCTION public.close_stale_opportunities()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Guard against infinite recursion: this trigger UPDATEs opportunities,
+  -- which would otherwise re-fire the same AFTER UPDATE trigger forever
+  -- ("stack depth limit exceeded"). Only run at the top trigger level.
+  IF pg_trigger_depth() > 1 THEN
+    RETURN NULL;
+  END IF;
   UPDATE public.opportunities
   SET status = 'closed', updated_at = NOW()
   WHERE status = 'open'
