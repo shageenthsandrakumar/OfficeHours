@@ -1,38 +1,75 @@
-import Link from "next/link";
+"use client";
 
-export default function EntryPage() {
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { APP_NAME } from "@/lib/constants";
+import type { UserRole } from "@/lib/constants";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
+
+export default function LandingPage() {
+  const router = useRouter();
+  const [role, setRole] = useState<UserRole | null>(null);
+
+  function continueToSignup() {
+    if (!role) return;
+    sessionStorage.setItem("signup_role", role);
+    router.push(`/auth/signup?role=${role}`);
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4 py-16">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--color-honey-soft)_0%,_transparent_60%)]"
-        aria-hidden
-      />
-      <div className="relative mx-auto max-w-lg text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-coral">
-          Evidence-first coordination
-        </p>
-        <h1 className="mt-4 font-serif text-4xl font-semibold leading-tight text-ink sm:text-5xl">
-          OfficeHours
-        </h1>
-        <p className="mx-auto mt-5 max-w-md text-lg text-ink-muted">
-          Important signals hide below the résumé. We surface them, assess fit,
-          and open a shared investigation—not a ranking.
-        </p>
-        <Link
-          href="/start"
-          className="mt-10 inline-block w-full max-w-sm rounded-2xl bg-coral py-4 text-base font-semibold text-white shadow-md transition hover:brightness-105 sm:w-auto sm:px-12"
-        >
-          Begin demo →
-        </Link>
-        <p className="mt-6 text-sm text-ink-muted">
-          ~60 seconds: pick your role, answer 3 questions, watch analysis run.
-        </p>
-        <Link
-          href="/note/11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222"
-          className="mt-8 inline-block text-sm font-medium text-sage hover:underline"
-        >
-          Skip to finished investigation (judges)
-        </Link>
+    <main className="min-h-screen bg-ascend-bg">
+      <div className="mx-auto flex min-h-screen max-w-content flex-col px-8 py-8">
+        <header className="flex items-center justify-between">
+          <span className="font-heading text-[18px] text-ascend-text">{APP_NAME}</span>
+          <Link href="/auth/login" className="text-sm text-ascend-muted hover:text-ascend-primary">
+            Log in
+          </Link>
+        </header>
+
+        <section className="flex flex-1 flex-col items-center justify-center py-16 text-center">
+          <p className="label-text">Scholarly opportunity matching</p>
+          <h1 className="page-title mt-4 max-w-lg">
+            Ascend to your next academic opportunity
+          </h1>
+          <p className="mt-4 max-w-md text-sm text-ascend-muted">
+            AI connects professors posting research and internships with students
+            whose interests, skills, and availability truly align.
+          </p>
+
+          <div className="mt-12 w-full max-w-md text-left">
+            <p className="mb-4 text-sm text-ascend-text">I am a…</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(
+                [
+                  { id: "student" as const, title: "Student", desc: "Discover AI-matched opportunities" },
+                  { id: "professor" as const, title: "Professor", desc: "Post roles and review ranked applicants" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setRole(opt.id)}
+                  className={cn(
+                    "rounded-lg border p-5 text-left transition",
+                    role === opt.id
+                      ? "border-[1.5px] border-ascend-secondary bg-ascend-sidebar"
+                      : "border-ascend-border/80 bg-ascend-card hover:bg-ascend-sidebar"
+                  )}
+                  style={{ borderWidth: role === opt.id ? "1.5px" : "0.5px" }}
+                >
+                  <span className="font-heading text-[15px] text-ascend-text">{opt.title}</span>
+                  <p className="mt-2 label-text">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+            <Button className="mt-8 w-full" disabled={!role} onClick={continueToSignup}>
+              Continue with .edu email
+            </Button>
+            <p className="mt-3 label-text text-center">University email verification required</p>
+          </div>
+        </section>
       </div>
     </main>
   );

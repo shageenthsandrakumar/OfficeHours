@@ -1,6 +1,6 @@
-# OfficeHours frontend
+# Ascend frontend
 
-Shared Note UI with mocked data aligned to `app/models.py`.
+Full-stack UI for academic opportunity matching (Supabase + GMI/OpenAI).
 
 ## Run
 
@@ -9,10 +9,13 @@ npm install
 npm run dev
 ```
 
-- Home: http://localhost:3000
-- Demo note (Aisha × Soft Robotics): `/note/11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222`
+Open http://localhost:3000
 
-## Docs
+## Setup
 
-- `../docs/SUGGESTED_NEXT_STEP.md` — section spec
-- `../docs/FRONTEND_IMPLEMENTATION.md` — plan and phases
+1. Run `supabase/schema.sql` in your Supabase project
+2. Copy `.env.example` to `.env.local` and add credentials
+
+## Design
+
+Warm academic aesthetic — parchment palette, Playfair Display + Inter, fixed sidebar layout.

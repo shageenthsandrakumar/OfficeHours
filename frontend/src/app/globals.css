@@ -1,140 +1,65 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  --color-cream: #faf6f0;
-  --color-cream-dark: #f0e8dc;
-  --color-ink: #2c2825;
-  --color-ink-muted: #5c5650;
-  --color-coral: #e07a5f;
-  --color-coral-soft: #f4d4cb;
-  --color-sage: #81b29a;
-  --color-sage-soft: #d4e8dc;
-  --color-honey: #f2cc8f;
-  --color-honey-soft: #f9e8c9;
-  --color-card: #ffffff;
-  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-}
-
-html {
-  scroll-behavior: smooth;
+:root {
+  --ascend-bg: #f5f0e8;
+  --ascend-card: #fdfaf4;
+  --ascend-sidebar: #ede8dc;
+  --ascend-primary: #5c4a2a;
+  --ascend-primary-dark: #4a3a1e;
+  --ascend-secondary: #8b7355;
+  --ascend-text: #2c2416;
+  --ascend-text-muted: #6b5c45;
+  --ascend-border: #ddd5c0;
+  --ascend-success: #4a6741;
+  --ascend-destructive: #8b3a2a;
+  --ascend-match-bg: #eae0cc;
+  --ascend-placeholder: #a0917a;
+  --ascend-card-hover: #f5efe2;
+  --ascend-input-focus: #8b7355;
 }
 
 body {
-  background: var(--color-cream);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
+  background: var(--ascend-bg);
+  color: var(--ascend-text);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.font-serif {
-  font-family: var(--font-serif);
+.font-heading {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
 
-/* Lens atmospheres */
-.lens-for-me.discovery-shell {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-coral-soft) 35%, var(--color-cream)) 0%,
-    var(--color-cream) 28%
-  );
+.font-body {
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
-.lens-for-project.discovery-shell {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-sage-soft) 45%, var(--color-cream)) 0%,
-    var(--color-cream) 28%
-  );
-}
-
-.lens-transition {
-  animation: lens-fade 0.45s ease-out forwards;
-}
-
-@keyframes lens-fade {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+@layer components {
+  .page-title {
+    @apply font-heading text-[22px] font-medium leading-snug text-ascend-text;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
+  .section-title {
+    @apply font-heading text-[17px] font-medium leading-snug text-ascend-text;
   }
-  to {
-    opacity: 1;
+
+  .label-text {
+    @apply text-xs font-normal text-ascend-muted;
   }
-}
 
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+  .ascend-card {
+    @apply rounded-[10px] border border-ascend-border/80 bg-ascend-card p-5;
+    border-width: 0.5px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .ascend-input {
+    @apply w-full rounded-md border border-ascend-border bg-ascend-card px-3 py-2.5 text-sm text-ascend-text placeholder:text-ascend-placeholder focus:border-ascend-secondary focus:outline-none focus:ring-2 focus:ring-ascend-secondary;
   }
-}
 
-@keyframes panel-enter {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
+  .opportunity-card {
+    @apply ascend-card border-l-[3px] border-l-ascend-secondary transition-colors hover:bg-ascend-card-hover;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes card-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.35s ease-out forwards;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.5s ease-out forwards;
-  opacity: 0;
-}
-
-.panel-enter {
-  animation: panel-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.discovery-card-reveal {
-  animation: card-pop 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.discovery-card-hidden {
-  animation: pulse-soft 2s ease-in-out infinite;
-}
-
-@keyframes pulse-soft {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.85;
-  }
-}
-
-.scrollbar-thin {
-  scrollbar-width: thin;
 }
