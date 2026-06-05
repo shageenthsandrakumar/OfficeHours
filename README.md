@@ -16,7 +16,9 @@
 | **Why not a ChatGPT wrapper?** | `evaluate_fit()` is **rules-only and inspectable** — agents resolve objections over evidence, not a black-box similarity score. |
 | **Production-shaped?** | FastAPI · PostgreSQL · logged negotiations · swappable LLM (Anthropic / GMI). |
 
-**Live demo:** `python3 demo.py` → **Aisha Patel** (weak on paper, strong build signals) × **MIT soft robotics** → dossier **`AMBIGUOUS`** → agents → **`MATCH`** (recommend a conversation, not automatic placement).
+**Deployed app:** https://office-hours-umber.vercel.app — student/professor matching platform (Next.js + Supabase).
+
+**Agent-reasoning demo:** `python3 demo.py` → **Aisha Patel** (weak on paper, strong build signals) × **MIT soft robotics** → dossier **`AMBIGUOUS`** → three agents → **`MATCH`** (recommend a conversation, not automatic placement).
 
 ---
 
@@ -161,18 +163,20 @@ python app/seed.py    # Postgres required — MIT labs + demo students
 python run.py         # http://localhost:8000/docs
 ```
 
-### Frontend — Shared Note UI
+### Frontend — matching app (Next.js + Supabase)
+
+The deployed product is a student/professor matching platform: `.edu` auth, role-based onboarding, dashboards, and AI-ranked opportunities backed by Supabase.
 
 ```bash
-cd frontend && npm install && npm run dev   # http://localhost:3000
+cd frontend
+npm install
+cp .env.example .env.local   # set NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY
+npm run dev                  # http://localhost:3000
 ```
 
-Runs on mock fixtures out of the box (no backend needed). Demo note URLs:
-
-- Aisha (`AMBIGUOUS` → agents → `MATCH`): `/note/11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222`
-- Marcus (`CLEAR_MISMATCH`, agents skipped): `/note/33333333-3333-3333-3333-333333333333/44444444-4444-4444-4444-444444444444`
-
-For live data, `POST /negotiate` returns the full `SharedNotePayload` (`{ student, project, dossier, result }`) — swap `getMockNote` for a fetch against the API.
+- Run `frontend/supabase/schema.sql` in your Supabase SQL editor to create the tables, policies, and triggers.
+- Matching uses a deterministic rule-based score with an optional LLM refinement (GMI / OpenAI); it falls back to rules when no LLM key is set.
+- Live deployment: https://office-hours-umber.vercel.app
 
 ---
 
@@ -219,48 +223,56 @@ app/                     # Backend (FastAPI + agents)
 └── scraper.py
 demo.py · run.py
 
-frontend/                # Shared Note UI (Next.js 15 + TS + Tailwind)
-├── src/app/             # Routes: Home, onboarding flow, /note/[studentId]/[projectId]
-├── src/components/      # shared-note/, discovery/, onboarding/
-└── src/lib/
-    ├── types.ts         # Mirrors app/models.py (Dossier, SharedNotePayload)
-    ├── viewModel.ts     # Routing/decision → human copy (no enums in UI)
-    └── mock/notes.ts    # Demo fixtures (Aisha / Marcus) until API returns dossier
+frontend/                # Matching app (Next.js 15 + TS + Tailwind + Supabase)
+├── src/app/
+│   ├── auth/            # .edu login + signup
+│   ├── onboarding/      # student/ + professor/ flows
+│   ├── dashboard/       # student/ + professor/ dashboards
+│   └── api/             # match, apply, opportunities, profile routes
+├── src/lib/
+│   ├── supabase/        # client / server / middleware
+│   ├── matching/        # runMatching.ts
+│   ├── openai/match.ts  # rule-based score + optional LLM refinement
+│   └── types/database.ts
+└── supabase/schema.sql  # tables, RLS policies, triggers
 ```
 
 ---
 
 ## Sponsor integrations
 
-| Sponsor | How |
-|---------|-----|
-| **GMI** | Set `GMI_API_KEY` and `GMI_ENDPOINT` in `.env` — `llm_client.py` switches provider with no agent changes. |
-| **Phinite** | Implement stubs in `agent_runtime.py` (`register_identity`, `trace_event`, `log_decision`) with the Phinite SDK at kickoff. |
+| Sponsor | Status | How |
+|---------|--------|-----|
+| **GMI** | Wired | `llm_client.py` routes to GMI (Anthropic-compatible or OpenAI-compatible) via `GMI_API_KEY` — no agent-code changes. The frontend matcher uses the same provider. |
+| **Phinite** | Scaffolded | `agent_runtime.py` exposes `register_identity` / `trace_event` / `log_decision` hooks (no-op stubs) ready for the Phinite SDK. |
 
 ---
 
 ## Team
 
-Built together for **NY Tech Week — AI Agents: From Prototype to Production** (2026-06-03). OfficeHours is a shared codebase — product logic, backend, and agent workflows were designed and implemented collaboratively.
+Built together for **NY Tech Week — AI Agents: From Prototype to Production** (NYC, 2026-06-03). Four people, one shared codebase — product, reasoning logic, backend, UI, and deployment.
 
 ### Jayashree Johnson · [@jayashreejohnson](https://github.com/jayashreejohnson)
 
-- Product architecture and vision  
-- Dossier design  
-- Matching and routing framework  
-- Evaluation logic specification  
-- Frontend / UI  
-- Railway deployment  
-- API integration and product workflows  
-- Demo design and product positioning  
+- Product architecture and the dossier-first thesis
+- Dossier design and the routing framework (`CLEAR_FIT` / `CLEAR_MISMATCH` / `AMBIGUOUS`)
+- Frontend — onboarding flow, student/professor dashboards, matching UI
+- Supabase data model and Vercel deployment
+
+### Victoria Zhao
+
+- Evidence-scoring logic, designed alongside Jayashree — the rules that decide when a student–project pair is a clear fit, a clear mismatch, or ambiguous enough to need the agents
+
+### Salwa Shuman
+
+- UI design — making a dense, evidence-driven matching flow legible end to end
 
 ### Shageenth Sandrakumar · [@shageenthsandrakumar](https://github.com/shageenthsandrakumar)
 
-- Backend architecture  
-- FastAPI infrastructure  
-- Agent orchestration  
-- Database integration  
-- Sponsor integrations  
+- Backend architecture — FastAPI, the three agent modules, and the negotiation loop
+- `evaluate_fit` rules engine and the `Dossier` model
+- PostgreSQL / SQLAlchemy async; remote-DB (Railway) SSL
+- Sponsor integration — GMI provider routing in `llm_client.py`; Phinite observability hooks
 
 **Contributions welcome:** Phinite SDK wiring, deeper observability, and polish on `main` — open an issue or PR.
 
@@ -269,9 +281,9 @@ Built together for **NY Tech Week — AI Agents: From Prototype to Production** 
 ## Roadmap
 
 - ~~Return dossier on `/negotiate` JSON response~~ ✅ done — returns full `SharedNotePayload`
-- Wire frontend fetch layer to `/negotiate` (replace `getMockNote`)
-- Proactive surfacing (discovery before search)  
-- Rich intake flow and optional PI constraints (opt-in; not GPA-first by default)  
+- Connect the deployed matcher (Next.js + Supabase) to the dossier + agent engine, so ambiguous pairs run the full negotiation in production
+- Proactive surfacing (discovery before search)
+- Rich intake flow and optional PI constraints (opt-in; not GPA-first by default)
 
 ---
 
