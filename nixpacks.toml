@@ -1,0 +1,8 @@
+# Force Railway / Nixpacks to build the Python agent backend.
+# The repo also contains a Next.js app under frontend/ (deployed separately on
+# Vercel) and a stray root package-lock.json, so pin the provider to Python and
+# the start command explicitly to avoid auto-detect picking the wrong one.
+providers = ["python"]
+
+[start]
+cmd = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
