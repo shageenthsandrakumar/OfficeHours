@@ -25,6 +25,7 @@ import { AppMain, AppSidebar, MobileNav } from "@/components/layout/AppSidebar";
 import { AvatarInitials, MatchBadge, TopicChip, TypeBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ChipSelect } from "@/components/ui/ChipSelect";
+import { WhyThisMatchModal } from "@/components/dashboard/WhyThisMatchModal";
 
 type Section = "dashboard" | "opportunities" | "applications" | "profile";
 
@@ -86,11 +87,14 @@ function OpportunityCard({
   item,
   applying,
   onApply,
+  studentProfile,
 }: {
   item: MatchedOpportunity;
   applying: string | null;
   onApply: (id: string) => void;
+  studentProfile: StudentProfile | null;
 }) {
+  const [showWhy, setShowWhy] = useState(false);
   return (
     <article className="opportunity-card">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -112,7 +116,7 @@ function OpportunityCard({
         ))}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         {item.application_id ? (
           <span className="text-sm capitalize text-ascend-muted">
             Applied · {item.application_status}
@@ -122,7 +126,25 @@ function OpportunityCard({
             {applying === item.id ? "Applying…" : "One-click apply"}
           </Button>
         )}
+        {studentProfile && (
+          <button
+            type="button"
+            onClick={() => setShowWhy(true)}
+            className="rounded-md border border-ascend-border px-3 py-2 text-sm text-ascend-primary transition-colors hover:bg-ascend-card-hover"
+            style={{ borderWidth: "0.5px" }}
+          >
+            Why this match?
+          </button>
+        )}
       </div>
+
+      {showWhy && studentProfile && (
+        <WhyThisMatchModal
+          student={studentProfile}
+          opportunity={item}
+          onClose={() => setShowWhy(false)}
+        />
+      )}
     </article>
   );
 }
@@ -317,6 +339,7 @@ export function StudentDashboard() {
                     item={item}
                     applying={applying}
                     onApply={handleApply}
+                    studentProfile={profile}
                   />
                 ))
               )}
