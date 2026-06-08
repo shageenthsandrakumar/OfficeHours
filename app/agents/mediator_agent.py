@@ -36,20 +36,25 @@ Decision rules — the line between NEEDS_INFO and NO_MATCH is critical, read ca
 - MATCH: the transcript contains real, stated evidence that the student meets the bar.
   Actual skills or experience in the profile, not speculation and not "probably."
 
-- NEEDS_INFO: a required skill or qualification is simply NOT DOCUMENTED in the profile,
-  but nothing in the transcript shows the student actually lacks it — they may have it and
-  just did not write it down. Missing or unproven evidence is ALWAYS NEEDS_INFO, never
-  NO_MATCH. Name exactly what the student would need to provide to settle it. This is the
-  correct outcome for a thin profile EVEN IF several required skills are undocumented.
+- NEEDS_INFO: the student's field and background are plausibly RELEVANT to the lab, but
+  specific required skills or tools are simply NOT DOCUMENTED in the profile — they may have
+  them and just did not write them down. Undocumented or unproven evidence is ALWAYS
+  NEEDS_INFO, never NO_MATCH. Name exactly what the student would need to provide. This is
+  the correct outcome for a thin-but-relevant profile EVEN IF several required skills are
+  undocumented. (Example: a CS/robotics student applying to a soft-robotics lab whose
+  profile does not mention Python or CAD — relevant domain, undocumented specifics.)
 
-- NO_MATCH: reserved for a DEMONSTRATED mismatch that more information cannot fix — for
-  example, the student or their advocate stated the student does NOT have the skill, or
-  there is a hard disqualifier in the transcript (wrong level, wrong field, an explicit
-  dealbreaker). Do NOT choose NO_MATCH merely because required skills are undocumented or
-  unconfirmed — that is NEEDS_INFO.
+- NO_MATCH: reserved for a fundamental DOMAIN or APTITUDE mismatch that more evidence could
+  not bridge — the student's actual area of expertise is simply wrong for this lab.
+  (Example: an Electrical Engineering major with no chemistry background applying to a
+  chemistry-heavy wet lab.) Also use NO_MATCH if the student or advocate explicitly states
+  the student lacks a hard requirement, or there is a clear disqualifier (wrong level or
+  field). Do NOT choose NO_MATCH just because a few specific skills are undocumented in an
+  otherwise relevant profile — that is NEEDS_INFO.
 
-Before choosing NO_MATCH, apply this test: "Could the student flip this to a fit just by
-adding evidence they plausibly already have?" If yes, it is NEEDS_INFO, not NO_MATCH.
+Before choosing NO_MATCH, apply this test: "Is this a wrong-domain / wrong-aptitude
+mismatch, or just missing paperwork on specific skills in a relevant profile?" Missing
+paperwork on specific skills = NEEDS_INFO. Wrong domain or demonstrated absence = NO_MATCH.
 
 Never credit a claim the professor showed was unsupported, and never reward "probably has
 it" reasoning. No fabricated matches. Your justification must be inspectable.
@@ -85,7 +90,7 @@ Full negotiation transcript:
 {uncertainties_block}
 {summary_block}
 
-{'IMPORTANT: This is the final turn, give a terminal decision now. MATCH if the evidence confirms fit. NEEDS_INFO if the only blocker is undocumented evidence the student could still provide (name it) — this is correct EVEN IF several required skills are undocumented. NO_MATCH ONLY if the transcript shows a demonstrated mismatch that more information cannot fix (the student lacks the skill, or a hard disqualifier).' if force_terminal else ''}
+{'IMPORTANT: This is the final turn, give a terminal decision now. MATCH if the evidence confirms fit. NEEDS_INFO if the domain is relevant but specific required skills are merely undocumented (name them) — correct EVEN IF several are undocumented. NO_MATCH ONLY for a fundamental wrong-domain or wrong-aptitude mismatch, or a demonstrated/stated absence of a hard requirement.' if force_terminal else ''}
 
 Issue your decision now. Cite specific evidence from the transcript in your justification.
 """
