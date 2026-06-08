@@ -14,11 +14,11 @@
 | Question | Answer |
 |----------|--------|
 | **What problem?** | Strong students and real lab opportunities miss each other. Project evidence stays buried, filters reject too early, and there is no structured hearing for ambiguous fit. |
-| **What do you ship?** | A **deterministic dossier** for each student-project pair, then **three LLM agents only when routing is `AMBIGUOUS`**. |
+| **What do you ship?** | A **deterministic dossier** for each student-project pair, then **three LLM agents only when routing is `AMBIGUOUS`** — streamed live to the student through a **"Why this match?"** panel in the deployed app. |
 | **Why not a ChatGPT wrapper?** | `evaluate_fit()` is **rules-only and inspectable**. Agents resolve objections over evidence, not a black-box similarity score. |
-| **Production-shaped?** | FastAPI · PostgreSQL · logged negotiations · swappable LLM (Anthropic / GMI). |
+| **Production-shaped?** | FastAPI · PostgreSQL · logged negotiations · swappable LLM (Anthropic / GMI) · **deployed end-to-end** (Vercel + Render + Supabase) with the agents streaming live over SSE. |
 
-**Deployed app:** https://office-hours-umber.vercel.app (student/professor matching platform, Next.js + Supabase).
+**Deployed app:** https://office-hours-shageenth-sandrakumar-s-projects.vercel.app — the Next.js + Supabase matching platform. Click **"Why this match?"** on any opportunity to watch the three agents negotiate the dossier **live**.
 
 **Agent-reasoning demo:** `python3 demo.py` runs **Aisha Patel** (weak on paper, strong build signals) against **MIT soft robotics**. Dossier routes **`AMBIGUOUS`**, three agents negotiate, decision lands on **`MATCH`** (recommend a conversation, not automatic placement).
 
@@ -75,14 +75,14 @@ MATCH                 NO_MATCH        Student Agent
                    MATCH / NO_MATCH                     NEEDS_INFO
                           |                                 |
                   done (logged via API)        back to Student Agent
-                                               (up to 6 turns, then forced)
+                                               (up to 5 turns, then forced)
 ```
 
 | Routing | When | Agents run? | Result |
 |---------|------|-------------|--------|
 | **`CLEAR_FIT`** | Required skills evidenced; no material open questions | **No** | Immediate `MATCH` |
 | **`CLEAR_MISMATCH`** | Required skill missing; no ownership signals to compensate | **No** | Immediate `NO_MATCH` |
-| **`AMBIGUOUS`** | Gaps plus strong project evidence, inferred skills, or soft background mismatch | **Yes** | `MATCH` / `NO_MATCH` / `NEEDS_INFO` (up to **6** turns, then a forced terminal decision) |
+| **`AMBIGUOUS`** | Gaps plus strong project evidence, inferred skills, or soft background mismatch | **Yes** | `MATCH` / `NO_MATCH` / `NEEDS_INFO` (up to **5** turns, then a forced terminal decision) |
 
 > **Demo tip:** the default `demo.py` pair routes **`AMBIGUOUS`** and runs all three agents. Seeded student **Marcus** may hit **`CLEAR_MISMATCH`** (agents skipped). Use Aisha for the full agent story.
 
@@ -95,6 +95,20 @@ Each agent receives a **different dossier slice**. Advocate, gate, and arbiter a
 | **Student** | Advocate | `strengths` | Surface buried evidence; respond to objections honestly. |
 | **Professor** | Gate | `risks`, `uncertainties` | Enforce requirements; ask one focused question when unclear. |
 | **Mediator** | Arbiter | `uncertainties`, `summary` | Issue `DECISION: MATCH \| NO_MATCH \| NEEDS_INFO` with a short, evidence-based justification. |
+
+The student agent advocates **only on submitted evidence** — it never invents a skill it cannot point to, and concedes honestly when the evidence is thin.
+
+### 4. Live in the deployed app: "Why this match?"
+
+In production the negotiation is not a CLI artifact — it streams to the student. Every opportunity card has a **"Why this match?"** button that opens a panel and **streams the agents over Server-Sent Events** (`POST /negotiate/stream`): the dossier appears first, then each agent turn as it is generated, then the decision. Past negotiations are cached and replayed with a typing animation, so re-opening is instant.
+
+The decision is honest about *why* it landed where it did:
+
+| Outcome | Meaning | What the student sees |
+|---------|---------|-----------------------|
+| **`MATCH`** | Real, stated evidence meets the bar | "Recommended — start a conversation." |
+| **`NEEDS_INFO`** | Relevant domain, but a specific required skill is simply **undocumented** | A yes/no gate — *"Is this part of your background?"* — where **No** ends it honestly and **Yes** re-opens the original submission to **add the evidence and re-run** the negotiation in place. |
+| **`NO_MATCH`** | A **structural** mismatch more evidence cannot bridge: wrong domain/aptitude, zero adjacent overlap, a self-declared absence, a hard disqualifier, or goal misalignment | A clear, non-judgmental "not a fit." Never a GPA or "didn't try hard enough" filter. |
 
 ---
 
@@ -118,6 +132,22 @@ FastAPI  ·  PostgreSQL (student.*, lab.*)  ·  negotiation_logs
 | Matching | `app/agents/fit.py` returns `Dossier` |
 | Agents | Plain Python + direct LLM calls (no agent framework) |
 | Observability | Phinite hooks in `agent_runtime.py` (SDK-ready stubs) |
+
+### Deployed topology
+
+```
+Browser
+  |  Next.js (Vercel)  ──  Supabase (auth, profiles, opportunities, negotiation cache)
+  |
+  |  POST /negotiate/stream   (Server-Sent Events)
+  v
+FastAPI (Render)  ──  evaluate_fit() rules  +  GMI Cloud agents
+```
+
+`app/integration.py` maps Supabase rows (topics + free-text bio) onto the agent engine's
+`StudentProfile` / `LabProject` — extracting skills and inferring ownership signals from
+achievement language — so the dossier is meaningful on the data the product actually
+collects, **with no changes to the agent engine itself**.
 
 ---
 
@@ -179,18 +209,37 @@ python run.py         # http://localhost:8000/docs
 
 ### Frontend, matching app (Next.js + Supabase)
 
-The deployed product is a student/professor matching platform: `.edu` auth, role-based onboarding, dashboards, and AI-ranked opportunities backed by Supabase.
+The deployed product is a student/professor matching platform: `.edu` auth, role-based onboarding, dashboards, AI-ranked opportunities backed by Supabase, and the live **"Why this match?"** agent panel.
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local   # set NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY
+cp .env.example .env.local   # NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY
+                             # NEXT_PUBLIC_AGENT_API_URL -> FastAPI backend (e.g. http://localhost:8000)
 npm run dev                  # http://localhost:3000
 ```
 
-- Run `frontend/supabase/schema.sql` in your Supabase SQL editor to create the tables, policies, and triggers.
+- Run `frontend/supabase/schema.sql` for the core tables/policies/triggers, then `frontend/supabase/negotiations.sql` to add the negotiation cache table.
 - Matching uses a deterministic rule-based score with an optional LLM refinement (GMI / OpenAI). It falls back to rules when no LLM key is set.
-- Live deployment: https://office-hours-umber.vercel.app
+- The "Why this match?" panel calls `NEXT_PUBLIC_AGENT_API_URL` (`POST /negotiate/stream`). Run the FastAPI backend alongside the frontend, or point it at the deployed backend.
+- Live deployment: https://office-hours-shageenth-sandrakumar-s-projects.vercel.app
+
+---
+
+## Deployment
+
+The whole stack runs on free tiers, fully decoupled:
+
+| Piece | Host | Notes |
+|-------|------|-------|
+| Frontend (Next.js) | **Vercel** | Root directory `frontend/`. Env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_AGENT_API_URL`. |
+| Agent backend (FastAPI) | **Render** | Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Env: `GMI_API_KEY`, `GMI_BASE_URL`, `DEFAULT_MODEL`. DB-free for `/negotiate/stream`. |
+| Data + auth | **Supabase** | Add the deployed URL under Auth → URL Configuration so login redirects resolve. |
+
+- Frontend: https://office-hours-shageenth-sandrakumar-s-projects.vercel.app
+- Agent backend: https://officehours-wj6h.onrender.com (`/health` for a liveness check)
+
+> Render's free tier sleeps after inactivity, so the first negotiation after an idle period cold-starts (~1 min), then runs warm.
 
 ---
 
@@ -205,6 +254,7 @@ npm run dev                  # http://localhost:3000
 | GET | `/projects` | List lab projects |
 | GET | `/projects/{project_id}` | Get one project |
 | POST | `/negotiate?student_id=&project_id=` | Dossier pre-screen + negotiation; saves log. Returns the full `SharedNotePayload` (`{ student, project, dossier, result }`) for the UI |
+| POST | `/negotiate/stream` | **Streams** the dossier, each agent turn, and the decision over Server-Sent Events (`event: dossier \| turn \| decision \| done`). Powers the live "Why this match?" panel. Body: `{ student, opportunity }` (Supabase shapes) |
 | GET | `/negotiations` | List past runs (summary) |
 
 ---
@@ -228,10 +278,11 @@ app/                     # Backend (FastAPI + agents)
     student_agent.py
     professor_agent.py
     mediator_agent.py
-  negotiation.py         # Pre-screen, then short-circuit or agent loop
+  negotiation.py         # run_negotiation + stream_negotiation (SSE generator)
+  integration.py         # maps Supabase rows -> agent models (skills, ownership)
   llm_client.py
   agent_runtime.py
-  main.py
+  main.py                # REST + /negotiate/stream (SSE)
   db_models.py
   seed.py
   scraper.py
@@ -243,12 +294,16 @@ frontend/                # Matching app (Next.js 15 + TS + Tailwind + Supabase)
     onboarding/          # student/ + professor/ flows
     dashboard/           # student/ + professor/ dashboards
     api/                 # match, apply, opportunities, profile routes
+  src/components/
+    dashboard/
+      WhyThisMatchModal.tsx  # live agent stream (SSE) + NEEDS_INFO re-run loop
   src/lib/
     supabase/            # client / server / middleware
     matching/            # runMatching.ts
     openai/match.ts      # rule-based score + optional LLM refinement
     types/database.ts
-  supabase/schema.sql    # tables, RLS policies, triggers
+  supabase/schema.sql        # tables, RLS policies, triggers
+  supabase/negotiations.sql  # negotiation cache (replay) table + RLS
 ```
 
 ---
@@ -257,7 +312,7 @@ frontend/                # Matching app (Next.js 15 + TS + Tailwind + Supabase)
 
 | Sponsor | Status | How |
 |---------|--------|-----|
-| **GMI** | Wired | `llm_client.py` routes to GMI (Anthropic-compatible or OpenAI-compatible) via `GMI_API_KEY`, with no agent-code changes. The frontend matcher can use the same provider. |
+| **GMI** | Wired (live) | `llm_client.py` routes to GMI (Anthropic-compatible or OpenAI-compatible) via `GMI_API_KEY`, with no agent-code changes. In the deployed app, **GMI powers the live "Why this match?" negotiation** streamed to students from the Render backend. |
 | **Phinite** | Scaffolded | `agent_runtime.py` exposes `register_identity` / `trace_event` / `log_decision` hooks (no-op stubs) ready for the Phinite SDK. |
 
 ---
@@ -286,6 +341,7 @@ Built together for **NY Tech Week, AI Agents: From Prototype to Production** (NY
 - `evaluate_fit` rules engine and the `Dossier` model
 - PostgreSQL / SQLAlchemy async; remote-DB (Railway) SSL
 - Sponsor integration: GMI provider routing in `llm_client.py`, Phinite observability hooks
+- **End-to-end integration:** wired the agent engine into the deployed product — the SSE streaming endpoint (`/negotiate/stream`), the Supabase→agent mapping layer (`integration.py`), the live **"Why this match?"** panel with the `NEEDS_INFO` add-evidence-and-re-run loop, and the Vercel + Render deployment. Built additively on Salwa's UI without changing it.
 
 **Contributions welcome:** Phinite SDK wiring, deeper observability, and polish on `main`. Open an issue or PR.
 
@@ -294,7 +350,7 @@ Built together for **NY Tech Week, AI Agents: From Prototype to Production** (NY
 ## Roadmap
 
 - ~~Return dossier on `/negotiate` JSON response~~ done. Returns the full `SharedNotePayload`.
-- Connect the deployed matcher (Next.js + Supabase) to the dossier and agent engine, so ambiguous pairs run the full negotiation in production.
+- ~~Connect the deployed matcher (Next.js + Supabase) to the dossier and agent engine, so ambiguous pairs run the full negotiation in production~~ **done** — live via the "Why this match?" panel and `POST /negotiate/stream`.
 - Proactive surfacing (discovery before search).
 - Rich intake flow and optional PI constraints (opt-in, not GPA-first by default).
 
