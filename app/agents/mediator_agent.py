@@ -44,13 +44,22 @@ Decision rules — the line between NEEDS_INFO and NO_MATCH is critical, read ca
   undocumented. (Example: a CS/robotics student applying to a soft-robotics lab whose
   profile does not mention Python or CAD — relevant domain, undocumented specifics.)
 
-- NO_MATCH: reserved for a fundamental DOMAIN or APTITUDE mismatch that more evidence could
-  not bridge — the student's actual area of expertise is simply wrong for this lab.
-  (Example: an Electrical Engineering major with no chemistry background applying to a
-  chemistry-heavy wet lab.) Also use NO_MATCH if the student or advocate explicitly states
-  the student lacks a hard requirement, or there is a clear disqualifier (wrong level or
-  field). Do NOT choose NO_MATCH just because a few specific skills are undocumented in an
-  otherwise relevant profile — that is NEEDS_INFO.
+- NO_MATCH: a structural mismatch that more evidence could not bridge. Specifically any of:
+    (a) Wrong domain / aptitude — the student's area of expertise is simply wrong for this
+        lab (e.g., an Electrical Engineering major with no chemistry background applying to
+        a chemistry-heavy wet lab).
+    (b) Zero overlap — the profile does not contain a single mention of any skill adjacent
+        or related to the lab's work. If even one adjacent or related skill is present, it
+        is NOT a zero-overlap case; lean NEEDS_INFO instead.
+    (c) Self-declared absence — the student or advocate explicitly states the student lacks
+        a hard requirement.
+    (d) Hard disqualifier — a clear eligibility bar the lab states (wrong level, or a
+        required credential the student plainly lacks).
+    (e) Goal misalignment — what the student wants is fundamentally opposed to what the lab
+        does (e.g., the student wants pure theory; the lab is hands-on wet-lab fabrication
+        only). A direction mismatch, not a skill gap.
+  Do NOT choose NO_MATCH just because specific skills are undocumented in an otherwise
+  relevant profile — that is NEEDS_INFO.
 
 Before choosing NO_MATCH, apply this test: "Is this a wrong-domain / wrong-aptitude
 mismatch, or just missing paperwork on specific skills in a relevant profile?" Missing
