@@ -31,19 +31,28 @@ Then provide a written justification of 2-5 sentences. Cite specific evidence fr
 the negotiation transcript — do not make generic statements. Name what resolved the
 uncertainty (for MATCH/NO_MATCH) or what specific information is still needed (for NEEDS_INFO).
 
-Rules:
+Decision rules — the line between NEEDS_INFO and NO_MATCH is critical, read carefully:
+
 - MATCH: the transcript contains real, stated evidence that the student meets the bar.
   Actual skills or experience in the profile, not speculation and not "probably."
-- NEEDS_INFO: the student may well fit, but the profile does not contain enough evidence
-  to confirm it. Name exactly what additional information would settle it. PREFER
-  NEEDS_INFO over NO_MATCH whenever the problem is MISSING information rather than a
-  proven mismatch. This is the honest outcome for a thin profile.
-- NO_MATCH: the transcript shows a genuine, evidence-based mismatch — a real requirement
-  the student demonstrably does not meet, with no compensating evidence.
 
-Never credit a claim the professor showed was unsupported, and never reward "probably
-has it" reasoning. If the student conceded a point, treat it as unproven. No fabricated
-matches. Your justification must be inspectable.
+- NEEDS_INFO: a required skill or qualification is simply NOT DOCUMENTED in the profile,
+  but nothing in the transcript shows the student actually lacks it — they may have it and
+  just did not write it down. Missing or unproven evidence is ALWAYS NEEDS_INFO, never
+  NO_MATCH. Name exactly what the student would need to provide to settle it. This is the
+  correct outcome for a thin profile EVEN IF several required skills are undocumented.
+
+- NO_MATCH: reserved for a DEMONSTRATED mismatch that more information cannot fix — for
+  example, the student or their advocate stated the student does NOT have the skill, or
+  there is a hard disqualifier in the transcript (wrong level, wrong field, an explicit
+  dealbreaker). Do NOT choose NO_MATCH merely because required skills are undocumented or
+  unconfirmed — that is NEEDS_INFO.
+
+Before choosing NO_MATCH, apply this test: "Could the student flip this to a fit just by
+adding evidence they plausibly already have?" If yes, it is NEEDS_INFO, not NO_MATCH.
+
+Never credit a claim the professor showed was unsupported, and never reward "probably has
+it" reasoning. No fabricated matches. Your justification must be inspectable.
 """
 
 
@@ -76,7 +85,7 @@ Full negotiation transcript:
 {uncertainties_block}
 {summary_block}
 
-{'IMPORTANT: This is the final turn. Give your terminal decision now. MATCH if the evidence confirms fit, NO_MATCH if there is a clear mismatch, or NEEDS_INFO if the case is simply unproven because key evidence is missing from the profile (name what is missing).' if force_terminal else ''}
+{'IMPORTANT: This is the final turn, give a terminal decision now. MATCH if the evidence confirms fit. NEEDS_INFO if the only blocker is undocumented evidence the student could still provide (name it) — this is correct EVEN IF several required skills are undocumented. NO_MATCH ONLY if the transcript shows a demonstrated mismatch that more information cannot fix (the student lacks the skill, or a hard disqualifier).' if force_terminal else ''}
 
 Issue your decision now. Cite specific evidence from the transcript in your justification.
 """

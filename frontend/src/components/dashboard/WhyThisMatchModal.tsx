@@ -175,9 +175,8 @@ export function WhyThisMatchModal({
         }
       }
       setPhase("done");
-      // Offer the add-evidence loop on ANY non-match that has addressable skill gaps,
-      // not just NEEDS_INFO — the mediator sometimes labels the same thin profile NO_MATCH.
-      if (finalDecision !== "MATCH" && (doss?.skill_gaps?.length ?? 0) > 0) setGate("ask");
+      // Only NEEDS_INFO offers the add-evidence loop. NO_MATCH is terminal.
+      if (finalDecision === "NEEDS_INFO") setGate("ask");
 
       if (doss && finalDecision) {
         await supabase.from("negotiations").upsert(
@@ -217,8 +216,7 @@ export function WhyThisMatchModal({
       setDecision(cached.decision as string);
       setJustification((cached.justification as string) ?? "");
       setPhase("done");
-      const cachedDoss = cached.dossier as DossierLite;
-      if (cached.decision !== "MATCH" && (cachedDoss?.skill_gaps?.length ?? 0) > 0) setGate("ask");
+      if (cached.decision === "NEEDS_INFO") setGate("ask");
       return;
     }
 
